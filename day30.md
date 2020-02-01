@@ -8,12 +8,49 @@
 
 ```
 #server
+#由于在accept recv 会形成阻塞，一旦将setblocking设置为false，如果没有收到链接或者消息则会报BlockingIOError错，所以需要使用try来解决。另外将conn放入列表时，要做conn添加删除动作切记不能在for循环内部操作list。
+
+import socket
+sk=socket.socket(type=socket.SOCK_STREAM)
+sk.bind(('127.0.0.1',9000))
+sk.setblocking(False)
+sk.listen()
+
+l=[]
+d_l=[]
+while True:
+    try:
+        conn,addr=sk.accept()
+        print(conn)
+        l.append(conn)
+    except BlockingIOError:
+        for c in l:
+            try:
+                a=c.recv(1024).decode('utf-8')
+                if not a:
+                    d_l.append(c)
+                    continue
+                c.send(a.upper().encode('utf-8'))
+            except BlockingIOError:pass
+        for i in d_l:
+            l.remove(i)
+        d_l.clear()
 ```
 
 
 
 ```
 #client
+import socket
+import time
+sk=socket.socket(type=socket.SOCK_STREAM)
+
+sk.connect(('127.0.0.1',9000))
+while True:
+    time.sleep(1)
+    sk.send('clent11'.encode('utf-8'))
+    a=sk.recv(1024).decode('utf-8')
+    print(a)
 ```
 
 
